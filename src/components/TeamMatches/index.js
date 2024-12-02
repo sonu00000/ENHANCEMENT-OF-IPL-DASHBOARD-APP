@@ -14,6 +14,7 @@ class TeamMatches extends Component {
   state = {
     isLoading: true,
     teamMatchesData: {},
+    pieChartData: null,
   }
 
   componentDidMount() {
@@ -41,16 +42,19 @@ class TeamMatches extends Component {
     const {id} = params
 
     const response = await fetch(`${teamMatchesApiUrl}${id}`)
-    const fetchedData = await response.json()
-    const formattedData = {
-      teamBannerURL: fetchedData.team_banner_url,
-      latestMatch: this.getFormattedData(fetchedData.latest_match_details),
-      recentMatches: fetchedData.recent_matches.map(eachMatch =>
-        this.getFormattedData(eachMatch),
-      ),
+    if (response.ok) {
+      const fetchedData = await response.json()
+      const formattedData = {
+        teamBannerURL: fetchedData.team_banner_url,
+        latestMatch: this.getFormattedData(fetchedData.latest_match_details),
+        recentMatches: fetchedData.recent_matches.map(eachMatch =>
+          this.getFormattedData(eachMatch),
+        ),
+      }
+      // FIX13: The state value of isLoading should be set to false to display the response
+      this.setState({teamMatchesData: formattedData, isLoading: false})
+      this.generatePieChartData()
     }
-    // FIX13: The state value of isLoading should be set to false to display the response
-    this.setState({teamMatchesData: formattedData, isLoading: false})
   }
 
   getNoOfMatches = value => {
@@ -63,11 +67,15 @@ class TeamMatches extends Component {
     return result
   }
 
-  generatePieChartData = () => [
-    {name: 'Won', value: this.getNoOfMatches('Won')},
-    {name: 'Lost', value: this.getNoOfMatches('Lost')},
-    {name: 'Drawn', value: this.getNoOfMatches('Drawn')},
-  ]
+  generatePieChartData = () => {
+    this.setState({
+      pieChartData: [
+        {name: 'Won', value: this.getNoOfMatches('Won')},
+        {name: 'Lost', value: this.getNoOfMatches('Lost')},
+        {name: 'Drawn', value: this.getNoOfMatches('Drawn')},
+      ],
+    })
+  }
 
   renderRecentMatchesList = () => {
     const {teamMatchesData} = this.state
@@ -83,7 +91,7 @@ class TeamMatches extends Component {
   }
 
   renderTeamMatches = () => {
-    const {teamMatchesData} = this.state
+    const {teamMatchesData, pieChartData} = this.state
     const {teamBannerURL, latestMatch} = teamMatchesData
 
     return (
@@ -91,7 +99,7 @@ class TeamMatches extends Component {
         <img src={teamBannerURL} alt="team banner" className="team-banner" />
         <LatestMatch latestMatchData={latestMatch} />
         <h1 className="latest-match-heading mt-3">Team Statistics</h1>
-        <PieChart data={this.generatePieChartData()} />
+        {pieChartData && <PieChart data={pieChartData} />}
         {this.renderRecentMatchesList()}
         <Link to="/">
           <button type="button" className="btn btn-outline-info mb-2">
@@ -103,7 +111,7 @@ class TeamMatches extends Component {
   }
 
   renderLoader = () => (
-    <div data-testid="loader" className="loader-container">
+    <div testid="loader" className="loader-container">
       <Loader type="Oval" color="#ffffff" height={50} />
     </div>
   )

@@ -48,7 +48,7 @@ class Home extends Component {
 
   renderLoader = () => (
     // FIX7: For the purpose of testing here testid attribute should be added with the value "loader"
-    <div data-testid="loader" className="loader-container">
+    <div testid="loader" className="loader-container">
       <Loader type="Oval" color="#ffffff" height={50} />
     </div>
   )
